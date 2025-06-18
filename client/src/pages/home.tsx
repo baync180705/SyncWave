@@ -31,8 +31,8 @@ export const Home: React.FC = () => {
 
   return (
     <div className='relative'>
-        <div className={`flex flex-col h-screen w-screen justify-center items-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white`}>
-        <div className={`flex flex-col bg-white/10 p-12 rounded-2xl shadow-xl backdrop-blur-md w-[36rem] h-[18rem] justify-center ${showModal ? 'blur-sm' : ''}`}>
+        <div className="flex flex-col h-screen w-screen justify-center items-center bg-gradient-to-br from-gray-950 via-zinc-900 to-teal-950 text-white">
+        <div className={`flex flex-col bg-white/10 p-12 rounded-2xl shadow-xl backdrop-blur-md w-[36rem] h-[18rem] justify-center ${showModal ? 'blur-lg' : ''}`}>
             <div className="flex flex-col w-full space-y-4">
             <label htmlFor="username" className="text-2xl font-semibold tracking-wide text-white">
                 Enter your username
