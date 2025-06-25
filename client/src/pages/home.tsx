@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PlusCircleIcon, ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 import { RoomNumberInputModal } from '../components/roomNumberInputModal';
 import { Toast } from '../components/toast';
+import { useSocket } from '../hooks/useSocket';
 
 export const Home: React.FC = () => {
   const [username, setUsername] = useState<string>('');
@@ -9,7 +10,25 @@ export const Home: React.FC = () => {
   const [modalType, setModalType] = useState<'create' | 'join' | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const socket = useSocket();
+
+  useEffect(() => {
+    socket.on("connect", () => {
+      console.log(`Connected to Socket : ${socket.id}`);
+    });
+    
+    socket.on('join_room_failed', (message)=>{
+      console.log(message)
+      setToastMessage(message)
+    });
+    socket.on('join_room_success', (roomID)=>console.log(`Joined Room ${roomID}`));
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [socket]);
   const handleOpenModal = (type: 'create' | 'join') => {
+
     if(username !== '') {
         setModalType(type);
         setShowModal(true);
@@ -24,8 +43,15 @@ export const Home: React.FC = () => {
     setModalType(null);
   };
 
-  const handleRoomSubmit = (roomNumber: string) => {
+  const handleRoomSubmit = async (roomNumber: string) => {
     console.log(`Room ${modalType}: ${roomNumber}`);
+
+    if (socket) {
+      socket.emit("join_room", roomNumber);
+    }else{
+      console.log("Check your socket connection");
+    }
+
     handleCloseModal();
   };
 
