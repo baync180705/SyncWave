@@ -10,9 +10,18 @@ export const findRoomByID = async (roomID: string): Promise<IRoom | null> => {
 };
 
 export const addUserToRoom = async (roomID: string, user: string): Promise<IRoom | null> => {
-    const room: IRoom|null = await Room.findByIdAndUpdate(
-        {roomID},
+    const room: IRoom|null = await Room.findOneAndUpdate(
+        {roomID: roomID},
         {$push: {users: user}},
+        {new: true},
+    );
+    return room;
+}
+
+export const RemoveUserFromRoom = async (roomID: string, user: string): Promise<IRoom | null> => {
+    const room: IRoom|null = await Room.findOneAndUpdate(
+        {roomID: roomID},
+        {$pop: {users: user}},
         {new: true},
     );
     return room;
