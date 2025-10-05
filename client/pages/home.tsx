@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { PlusCircleIcon, ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 import { RoomNumberInputModal } from '../components/roomNumberInputModal';
 import { Toast } from '../components/toast';
-import { useSocket } from '../hooks/useSocket';
+import {createRoomService, joinRoomService} from "../services/roomServices";
 
 export const Home: React.FC = () => {
   const [username, setUsername] = useState<string>('');
@@ -10,23 +10,24 @@ export const Home: React.FC = () => {
   const [modalType, setModalType] = useState<'create' | 'join' | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const socket = useSocket();
+  // const socket = useSocket();
 
-  useEffect(() => {
-    socket.on("connect", () => {
-      console.log(`Connected to Socket : ${socket.id}`);
-    });
+  // useEffect(() => {
+  //   socket.on("connect", () => {
+  //     console.log(`Connected to Socket : ${socket.id}`);
+  //   });
     
-    socket.on('join_room_failed', (message)=>{
-      console.log(message)
-      setToastMessage(message)
-    });
-    socket.on('join_room_success', (roomID)=>console.log(`Joined Room ${roomID}`));
+  //   socket.on('join_room_failed', (message)=>{
+  //     console.log(message)
+  //     setToastMessage(message)
+  //   });
+  //   socket.on('join_room_success', (roomID)=>console.log(`Joined Room ${roomID}`));
 
-    return () => {
-      socket.disconnect();
-    };
-  }, [socket]);
+  //   return () => {
+  //     socket.disconnect();
+  //   };
+  // }, [socket]);
+
   const handleOpenModal = (type: 'create' | 'join') => {
 
     if(username !== '') {
@@ -46,10 +47,34 @@ export const Home: React.FC = () => {
   const handleRoomSubmit = async (roomNumber: string) => {
     console.log(`Room ${modalType}: ${roomNumber}`);
 
-    if (socket) {
-      socket.emit("join_room", roomNumber);
-    }else{
-      console.log("Check your socket connection");
+    if(modalType=="create") {
+      try {
+        const res = await createRoomService(roomNumber, username);
+        if (res) setToastMessage("Room Created Successfully");
+        else setToastMessage("Room Creation Failed");
+      } catch (err) {
+        setToastMessage("Room Creation Failed");
+        if (err instanceof Error) {
+            throw new Error(err.message);
+        } else {
+            throw new Error("An unknown error occurred");
+        }
+    }
+    }
+
+    if(modalType=="join") {
+      try {
+        const res = await joinRoomService(roomNumber, username);
+        if (res) setToastMessage("Room Joined Successfully");
+        else setToastMessage("Room Joining Failed");
+      } catch (err) {
+        setToastMessage("Room Creation Failed");
+        if (err instanceof Error) {
+            throw new Error(err.message);
+        } else {
+            throw new Error("An unknown error occurred");
+        }
+    }
     }
 
     handleCloseModal();
