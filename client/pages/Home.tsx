@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PlusCircleIcon, ArrowRightCircleIcon } from '@heroicons/react/24/solid';
-import { RoomNumberInputModal } from '../components/roomNumberInputModal';
-import { Toast } from '../components/toast';
+import { RoomNumberInputModal } from '../components/RoomNumberInputModal';
+import { Toast } from '../components/Toast';
 import {createRoomService, joinRoomService} from "../services/roomServices";
 
 export const Home: React.FC = () => {
@@ -9,6 +10,8 @@ export const Home: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<'create' | 'join' | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const navigate = useNavigate();
 
   // const socket = useSocket();
 
@@ -50,7 +53,12 @@ export const Home: React.FC = () => {
     if(modalType=="create") {
       try {
         const res = await createRoomService(roomNumber, username);
-        if (res) setToastMessage("Room Created Successfully");
+        if (res){
+          setToastMessage("Room Created Successfully");
+          setTimeout(() => {
+            navigate("/room");
+          }, 900);
+        }       
         else setToastMessage("Room Creation Failed");
       } catch (err) {
         setToastMessage("Room Creation Failed");
@@ -65,7 +73,12 @@ export const Home: React.FC = () => {
     if(modalType=="join") {
       try {
         const res = await joinRoomService(roomNumber, username);
-        if (res) setToastMessage("Room Joined Successfully");
+        if (res) {
+          setToastMessage("Room Joined Successfully");
+          setTimeout(() => {
+            navigate("/room");
+          }, 900);
+        }
         else setToastMessage("Room Joining Failed");
       } catch (err) {
         setToastMessage("Room Creation Failed");
