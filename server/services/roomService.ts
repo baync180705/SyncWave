@@ -18,11 +18,31 @@ export const addUserToRoom = async (roomID: string, user: string): Promise<IRoom
     return room;
 }
 
-export const RemoveUserFromRoom = async (roomID: string, user: string): Promise<IRoom | null> => {
+export const removeUserFromRoom = async (roomID: string, user: string): Promise<IRoom | null> => {
     const room: IRoom|null = await Room.findOneAndUpdate(
         {roomID: roomID},
-        {$pop: {users: user}},
+        {$pull: {users: user}},
         {new: true},
     );
+
+    if (room){
+        if(room.users.length===0){
+            await deleteRoom(roomID);
+        }
+    }
+
     return room;
 }
+
+//local
+
+const deleteRoom = async (roomID: string): Promise<IRoom | null> => {
+    const room = await Room.findOne({ roomID: roomID });
+
+    if (room && room.users.length === 0) {
+        await Room.deleteOne({ roomID: roomID });
+        return null; 
+    }
+
+    return room;
+};

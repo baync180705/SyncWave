@@ -1,19 +1,62 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Toast } from "../components/Toast";
 import { MemberList } from "../components/MemberList";
 import { MusicQueue } from "../components/MusicQueue";
+// import { useSocket } from "../hooks/useSocket";
+import { removeFromRoomService } from "../services/roomServices";
 
 export const Room: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [members, setMembers] = useState<string[]>(["User1", "User2", "User3"]); // Example members
   const [queue, setQueue] = useState<string[]>([]); // Music queue
-  const navigate = useNavigate();
 
-  const handleLeaveRoom = () => {
-    setToastMessage("You have left the room.");
-    setTimeout(() => {
-      navigate("/"); // Redirect to Home page
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const {user, roomID} = location.state || {};
+
+  // const socket = useSocket();
+
+  // useEffect(() => {
+  //   socket.on("connect", () => {
+  //     console.log(`Connected to Socket : ${socket.id}`);
+  //   });
+    
+  //   socket.on('join_room_failed', (message)=>{
+  //     console.log(message)
+  //     setToastMessage(message)
+  //   });
+  //   socket.on('join_room_success', (roomID)=>console.log(`Joined Room ${roomID}`));
+
+  //   return () => {
+  //     socket.disconnect();
+  //   };
+  // }, [socket]);
+
+  const handleLeaveRoom = async () => {
+
+    setTimeout(async () => {
+
+      try{
+        const res = await removeFromRoomService(roomID, user);
+        if(res){
+          setToastMessage("You have left the room.");
+          navigate("/"); // Redirect to Home page
+        }
+        else{
+          setToastMessage("Failed to leave room. Try again later !")
+        }
+      } catch (err) {
+        setToastMessage("Failed to leave room. Try again later !");
+        if (err instanceof Error) {
+            throw new Error(err.message);
+        } else {
+            throw new Error("An unknown error occurred");
+        }
+      }
+      
+
     }, 900);
   };
 

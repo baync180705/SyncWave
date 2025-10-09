@@ -66,3 +66,25 @@ export const joinRoomService = async (roomID: string, user: string) => {
         }
     }
 }
+
+export const removeFromRoomService = async (roomID: string, user: string) => {
+    try {
+        const isRoom = doesRoomExist(roomID);
+        if (!isRoom) return false;
+
+        const res = await axios.post(`${API_BASE_URL}/api/rooms/remove`, {
+            "roomID":roomID,
+            "user":user
+        });
+
+        return res.data.success;
+    } catch (err) {
+        if (axios.isAxiosError(err)) {
+            throw new Error(err.response?.data?.message || "Failed to join room");
+        } else if (err instanceof Error) {
+            throw new Error(err.message);
+        } else {
+            throw new Error("An unknown error occurred");
+        }
+    }
+}

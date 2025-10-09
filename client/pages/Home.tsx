@@ -13,23 +13,6 @@ export const Home: React.FC = () => {
 
   const navigate = useNavigate();
 
-  // const socket = useSocket();
-
-  // useEffect(() => {
-  //   socket.on("connect", () => {
-  //     console.log(`Connected to Socket : ${socket.id}`);
-  //   });
-    
-  //   socket.on('join_room_failed', (message)=>{
-  //     console.log(message)
-  //     setToastMessage(message)
-  //   });
-  //   socket.on('join_room_success', (roomID)=>console.log(`Joined Room ${roomID}`));
-
-  //   return () => {
-  //     socket.disconnect();
-  //   };
-  // }, [socket]);
 
   const handleOpenModal = (type: 'create' | 'join') => {
 
@@ -48,15 +31,20 @@ export const Home: React.FC = () => {
   };
 
   const handleRoomSubmit = async (roomNumber: string) => {
-    console.log(`Room ${modalType}: ${roomNumber}`);
+
+    const state = {
+      "user": username,
+      "roomID": roomNumber
+    }
 
     if(modalType=="create") {
       try {
         const res = await createRoomService(roomNumber, username);
         if (res){
           setToastMessage("Room Created Successfully");
+
           setTimeout(() => {
-            navigate("/room");
+            navigate("/room", {state: state});
           }, 900);
         }       
         else setToastMessage("Room Creation Failed");
@@ -76,7 +64,7 @@ export const Home: React.FC = () => {
         if (res) {
           setToastMessage("Room Joined Successfully");
           setTimeout(() => {
-            navigate("/room");
+            navigate("/room", {state: state});
           }, 900);
         }
         else setToastMessage("Room Joining Failed");
