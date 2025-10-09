@@ -3,36 +3,39 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Toast } from "../components/Toast";
 import { MemberList } from "../components/MemberList";
 import { MusicQueue } from "../components/MusicQueue";
-// import { useSocket } from "../hooks/useSocket";
+import { useSocket } from "../hooks/useSocket";
 import { removeFromRoomService } from "../services/roomServices";
 
 export const Room: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [members, setMembers] = useState<string[]>(["User1", "User2", "User3"]); // Example members
-  const [queue, setQueue] = useState<string[]>([]); // Music queue
+  const [members, setMembers] = useState<string[]>([]); 
+  const [queue, setQueue] = useState<string[]>([]); 
 
   const navigate = useNavigate();
   const location = useLocation();
 
   const {user, roomID} = location.state || {};
 
-  // const socket = useSocket();
+  const socket = useSocket();
 
-  // useEffect(() => {
-  //   socket.on("connect", () => {
-  //     console.log(`Connected to Socket : ${socket.id}`);
-  //   });
+  useEffect(() => {
+
+    if (!user || !roomID) {
+      console.error("User or RoomID is undefined. Redirecting to Home.");
+      navigate("/");
+      return;
+    }
     
-  //   socket.on('join_room_failed', (message)=>{
-  //     console.log(message)
-  //     setToastMessage(message)
-  //   });
-  //   socket.on('join_room_success', (roomID)=>console.log(`Joined Room ${roomID}`));
+    socket.emit("join_or_leave_room", {user: user, roomID: roomID});
+    socket.on("user_list_updated", (userList: string[])=>{
+      setMembers(userList);
+      console.log(`Updated users list: ${userList}`);
+    })
 
-  //   return () => {
-  //     socket.disconnect();
-  //   };
-  // }, [socket]);
+    return () => {
+      socket.off("user_list_updated");
+    };
+  }, [navigate, roomID, socket, user]);
 
   const handleLeaveRoom = async () => {
 
@@ -42,6 +45,9 @@ export const Room: React.FC = () => {
         const res = await removeFromRoomService(roomID, user);
         if(res){
           setToastMessage("You have left the room.");
+
+          socket.emit("join_or_leave_room", {user: user, roomID: roomID});
+
           navigate("/"); // Redirect to Home page
         }
         else{
