@@ -68,9 +68,23 @@ export const Room: React.FC = () => {
 
   const handleAddMusic = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
+
+      const allowedMimeTypes = [
+        "audio/mpeg", "audio/aac", "audio/flac", "audio/alac",
+        "audio/wav", "audio/x-wav", "audio/aiff", "audio/x-aiff"
+      ];
+
+      const allowedExtensions = ["mp3", "aac", "flac", "alac", "wav", "aiff"];
+
       const file = event.target.files[0];
-      setQueue((prevQueue) => [...prevQueue, file.name]); // Add file name to the queue
-      setToastMessage(`${file.name} added to the queue.`);
+
+      const fileExtension = file.name.split(".").pop()?.toLowerCase();
+      if(allowedMimeTypes.includes(file.type) && fileExtension && allowedExtensions.includes(fileExtension)){
+        setQueue((prevQueue) => [...prevQueue, file.name]); 
+        setToastMessage(`${file.name} added to the queue.`);
+      }else{
+        setToastMessage("Invalid File Format ! Please try again.")
+      }
     }
   };
 
@@ -108,7 +122,7 @@ export const Room: React.FC = () => {
               <input
                 id="add-music"
                 type="file"
-                accept="audio/mp3"
+                accept="audio/*"
                 className="hidden"
                 onChange={handleAddMusic}
               />
