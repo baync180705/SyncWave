@@ -24,7 +24,6 @@ const socketHandlers = (socket: any) => {
     });
 
     socket.on("track_stream", async ({roomID}: {roomID: string})=> {
-        console.log("track stream listened");
         try{
             const track = await Track.findOne({roomID});
             if (track) socket.to(roomID).emit("updated_track", track.tracks);

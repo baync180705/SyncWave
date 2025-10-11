@@ -30,12 +30,10 @@ export const Room: React.FC = () => {
     socket.emit("join_or_leave_room", {user: user, roomID: roomID});
     socket.on("user_list_updated", (userList: string[])=>{
       setMembers(userList);
-      console.log(`Updated users list: ${userList}`);
     })
 
     socket.on("updated_track", (trackList: string[])=>{
       setQueue(trackList);
-      console.log(`Updated track list: ${trackList}`);
     })
 
     return () => {
@@ -111,11 +109,11 @@ export const Room: React.FC = () => {
 
   const handleRemoveMusic = async (music: string) => {
     try {
-      const res = await removeMusicFromTrackService(roomID, music); // Call the service to remove music
+      const res = await removeMusicFromTrackService(roomID, music);
       if (res) {
-        setQueue((prevQueue) => prevQueue.filter((track) => track !== music)); // Update the queue
+        setQueue((prevQueue) => prevQueue.filter((_,i) => i !== prevQueue.indexOf(music))); 
         setToastMessage(`${music} removed from the queue.`);
-        socket.emit("track_stream", { roomID: roomID }); // Notify other users
+        socket.emit("track_stream", { roomID: roomID }); 
       }
     } catch (err) {
       setToastMessage("Failed to remove music from track. Try again later!");

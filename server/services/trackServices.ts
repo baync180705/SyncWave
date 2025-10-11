@@ -3,7 +3,7 @@ import { Track, ITrack } from "../models/trackModels";
 export const addMusicToTrack = async (roomID: string, music: string): Promise<ITrack | null> => {
     const updatedTrack = await Track.findOneAndUpdate(
         { roomID },
-        { $addToSet: { tracks: music } },
+        { $push: { tracks: music } },
         { new: true, upsert: true },
     );
     return updatedTrack;
@@ -11,11 +11,12 @@ export const addMusicToTrack = async (roomID: string, music: string): Promise<IT
 
 
 export const removeMusicFromTrack = async (roomID: string, music: string): Promise<ITrack | null> => {
-    const updatedTrack = await Track.findOneAndUpdate(
-        { roomID },
-        { $pull: { tracks: music } }, 
-        { new: true }
-    );
-    return updatedTrack;
-
+    const track = await Track.findOne({ roomID: roomID });
+    let updatedTracks = track?.tracks;
+    if (track) {
+        updatedTracks = track.tracks.filter((_, i) => i !== track.tracks.indexOf(music));
+        track.tracks = updatedTracks;
+        await track.save();
+    }
+    return track;
 };
