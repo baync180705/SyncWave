@@ -1,4 +1,5 @@
 import { Room } from "../models/roomModel";
+import { Track } from "../models/trackModels";
 
 const socketHandlers = (socket: any) => {
     socket.on("disconnect", () => {
@@ -21,6 +22,17 @@ const socketHandlers = (socket: any) => {
             console.error("Error joining room:", err);
         }
     });
+
+    socket.on("track_stream", async ({roomID}: {roomID: string})=> {
+        try{
+            const track = await Track.findOne({roomID});
+            if (track) socket.to(roomID).emit("updated_track", track.tracks);
+        }
+        catch(err) {
+            console.log("Error updating track", err);
+        }
+
+    })
 };
 
 export default socketHandlers;

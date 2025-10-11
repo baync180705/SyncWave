@@ -5,6 +5,7 @@ import { MemberList } from "../components/MemberList";
 import { MusicQueue } from "../components/MusicQueue";
 import { useSocket } from "../hooks/useSocket";
 import { removeFromRoomService } from "../services/roomServices";
+import { addMusicToTrackService, removeMusicFromTrackService } from "../services/trackServices";
 
 export const Room: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -29,7 +30,10 @@ export const Room: React.FC = () => {
     socket.emit("join_or_leave_room", {user: user, roomID: roomID});
     socket.on("user_list_updated", (userList: string[])=>{
       setMembers(userList);
-      console.log(`Updated users list: ${userList}`);
+    })
+
+    socket.on("updated_track", (trackList: string[])=>{
+      setQueue(trackList);
     })
 
     return () => {
@@ -66,11 +70,58 @@ export const Room: React.FC = () => {
     }, 900);
   };
 
-  const handleAddMusic = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddMusic = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
+
+      const allowedMimeTypes = [
+        "audio/mpeg", "audio/aac", "audio/flac", "audio/alac",
+        "audio/wav", "audio/x-wav", "audio/aiff", "audio/x-aiff"
+      ];
+
+      const allowedExtensions = ["mp3", "aac", "flac", "alac", "wav", "aiff"];
+
       const file = event.target.files[0];
-      setQueue((prevQueue) => [...prevQueue, file.name]); // Add file name to the queue
-      setToastMessage(`${file.name} added to the queue.`);
+
+      const fileExtension = file.name.split(".").pop()?.toLowerCase();
+      if(allowedMimeTypes.includes(file.type) && fileExtension && allowedExtensions.includes(fileExtension)){
+
+        try{
+          const res = await addMusicToTrackService(roomID, file.name);
+          if(res){
+            setQueue((prevQueue) => [...prevQueue, file.name]); 
+            setToastMessage(`${file.name} added to the queue.`);
+            socket.emit("track_stream", {roomID: roomID});
+          }
+        }catch(err){
+          setToastMessage("Failed to add music to track. Try again later !");
+          if (err instanceof Error) {
+              throw new Error(err.message);
+          } else {
+              throw new Error("An unknown error occurred");
+          }
+        }
+
+      }else{
+        setToastMessage("Invalid File Format ! Please try again.");
+      }
+    }
+  };
+
+  const handleRemoveMusic = async (music: string) => {
+    try {
+      const res = await removeMusicFromTrackService(roomID, music);
+      if (res) {
+        setQueue((prevQueue) => prevQueue.filter((_,i) => i !== prevQueue.indexOf(music))); 
+        setToastMessage(`${music} removed from the queue.`);
+        socket.emit("track_stream", { roomID: roomID }); 
+      }
+    } catch (err) {
+      setToastMessage("Failed to remove music from track. Try again later!");
+      if (err instanceof Error) {
+        throw new Error(err.message);
+      } else {
+        throw new Error("An unknown error occurred");
+      }
     }
   };
 
@@ -98,7 +149,7 @@ export const Room: React.FC = () => {
             {/* Music Queue */}
             <div className="flex flex-col w-2/3 bg-white/10 p-4 rounded-md shadow-md">
               <h2 className="text-xl font-semibold mb-4">Music Queue</h2>
-              <MusicQueue queue={queue} />
+              <MusicQueue queue={queue} onRemoveMusic={handleRemoveMusic}/>
               <label
                 htmlFor="add-music"
                 className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition cursor-pointer text-center"
@@ -108,7 +159,7 @@ export const Room: React.FC = () => {
               <input
                 id="add-music"
                 type="file"
-                accept="audio/mp3"
+                accept="audio/*"
                 className="hidden"
                 onChange={handleAddMusic}
               />
