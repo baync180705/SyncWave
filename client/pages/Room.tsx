@@ -5,6 +5,7 @@ import { MemberList } from "../components/MemberList";
 import { MusicQueue } from "../components/MusicQueue";
 import { useSocket } from "../hooks/useSocket";
 import { removeFromRoomService } from "../services/roomServices";
+import { addMusicToTrackService } from "../services/trackServices";
 
 export const Room: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -30,6 +31,11 @@ export const Room: React.FC = () => {
     socket.on("user_list_updated", (userList: string[])=>{
       setMembers(userList);
       console.log(`Updated users list: ${userList}`);
+    })
+
+    socket.on("updated_track", (trackList: string[])=>{
+      setQueue(trackList);
+      console.log(`Updated track list: ${trackList}`);
     })
 
     return () => {
@@ -66,7 +72,7 @@ export const Room: React.FC = () => {
     }, 900);
   };
 
-  const handleAddMusic = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddMusic = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
 
       const allowedMimeTypes = [
@@ -80,10 +86,25 @@ export const Room: React.FC = () => {
 
       const fileExtension = file.name.split(".").pop()?.toLowerCase();
       if(allowedMimeTypes.includes(file.type) && fileExtension && allowedExtensions.includes(fileExtension)){
-        setQueue((prevQueue) => [...prevQueue, file.name]); 
-        setToastMessage(`${file.name} added to the queue.`);
+
+        try{
+          const res = await addMusicToTrackService(roomID, file.name);
+          if(res){
+            setQueue((prevQueue) => [...prevQueue, file.name]); 
+            setToastMessage(`${file.name} added to the queue.`);
+            socket.emit("track_stream", {roomID: roomID});
+          }
+        }catch(err){
+          setToastMessage("Failed to add music to track. Try again later !");
+          if (err instanceof Error) {
+              throw new Error(err.message);
+          } else {
+              throw new Error("An unknown error occurred");
+          }
+        }
+
       }else{
-        setToastMessage("Invalid File Format ! Please try again.")
+        setToastMessage("Invalid File Format ! Please try again.");
       }
     }
   };
