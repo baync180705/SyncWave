@@ -5,7 +5,7 @@ import { MemberList } from "../components/MemberList";
 import { MusicQueue } from "../components/MusicQueue";
 import { useSocket } from "../hooks/useSocket";
 import { removeFromRoomService } from "../services/roomServices";
-import { addMusicToTrackService } from "../services/trackServices";
+import { addMusicToTrackService, removeMusicFromTrackService } from "../services/trackServices";
 
 export const Room: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -109,6 +109,24 @@ export const Room: React.FC = () => {
     }
   };
 
+  const handleRemoveMusic = async (music: string) => {
+    try {
+      const res = await removeMusicFromTrackService(roomID, music); // Call the service to remove music
+      if (res) {
+        setQueue((prevQueue) => prevQueue.filter((track) => track !== music)); // Update the queue
+        setToastMessage(`${music} removed from the queue.`);
+        socket.emit("track_stream", { roomID: roomID }); // Notify other users
+      }
+    } catch (err) {
+      setToastMessage("Failed to remove music from track. Try again later!");
+      if (err instanceof Error) {
+        throw new Error(err.message);
+      } else {
+        throw new Error("An unknown error occurred");
+      }
+    }
+  };
+
   return (
     <div className="relative">
       <div className="flex flex-col h-screen w-screen justify-center items-center bg-gradient-to-br from-gray-950 via-zinc-900 to-teal-950 text-white">
@@ -133,7 +151,7 @@ export const Room: React.FC = () => {
             {/* Music Queue */}
             <div className="flex flex-col w-2/3 bg-white/10 p-4 rounded-md shadow-md">
               <h2 className="text-xl font-semibold mb-4">Music Queue</h2>
-              <MusicQueue queue={queue} />
+              <MusicQueue queue={queue} onRemoveMusic={handleRemoveMusic}/>
               <label
                 htmlFor="add-music"
                 className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition cursor-pointer text-center"
