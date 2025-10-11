@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlusCircleIcon, ArrowRightCircleIcon } from '@heroicons/react/24/solid';
-import { RoomNumberInputModal } from '../components/RoomNumberInputModal';
-import { Toast } from '../components/Toast';
-import {createRoomService, joinRoomService} from "../services/roomServices";
+import { RoomNumberInputModal } from '../../components/RoomNumberInputModal';
+import { Toast } from '../../components/Toast';
+import { handleCloseModal } from "./handlers/handleCloseModal";
+import { handleRoomSubmit } from './handlers/handleRoomSubmit';
+import { handleOpenModal } from './handlers/handleOpenModal';
 
 export const Home: React.FC = () => {
   const [username, setUsername] = useState<string>('');
@@ -12,74 +14,6 @@ export const Home: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const navigate = useNavigate();
-
-
-  const handleOpenModal = (type: 'create' | 'join') => {
-
-    if(username !== '') {
-        setModalType(type);
-        setShowModal(true);
-    } 
-    else {
-        setToastMessage('Please enter a username before proceeding');
-      }  
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setModalType(null);
-  };
-
-  const handleRoomSubmit = async (roomNumber: string) => {
-
-    const state = {
-      "user": username,
-      "roomID": roomNumber
-    }
-
-    if(modalType=="create") {
-      try {
-        const res = await createRoomService(roomNumber, username);
-        if (res){
-          setToastMessage("Room Created Successfully");
-
-          setTimeout(() => {
-            navigate("/room", {state: state});
-          }, 900);
-        }       
-        else setToastMessage("Room Creation Failed");
-      } catch (err) {
-        setToastMessage("Room Creation Failed");
-        if (err instanceof Error) {
-            throw new Error(err.message);
-        } else {
-            throw new Error("An unknown error occurred");
-        }
-    }
-    }
-
-    if(modalType=="join") {
-      try {
-        const res = await joinRoomService(roomNumber, username);
-        if (res) {
-          setToastMessage("Room Joined Successfully");
-          setTimeout(() => {
-            navigate("/room", {state: state});
-          }, 900);
-        }
-        else setToastMessage("Room Joining Failed");
-      } catch (err) {
-        setToastMessage("Room Creation Failed");
-        if (err instanceof Error) {
-            throw new Error(err.message);
-        } else {
-            throw new Error("An unknown error occurred");
-        }
-    }
-    }
-
-    handleCloseModal();
-  };
 
   return (
     <div className='relative'>
@@ -104,7 +38,7 @@ export const Home: React.FC = () => {
         <div className={`flex gap-10 mt-16 ${showModal ? 'blur-sm' : ''}`}>
             <div
             className="w-60 h-60 bg-white/20 rounded-full backdrop-blur-lg hover:bg-white/30 transition flex flex-col items-center justify-center text-center cursor-pointer"
-            onClick={() => handleOpenModal('create')}
+            onClick={() => handleOpenModal('create', username, setModalType, setShowModal, setToastMessage)}
             >
             <PlusCircleIcon className="h-16 w-16 text-white mb-4" />
             <span className="text-xl font-semibold">Create Room</span>
@@ -112,7 +46,7 @@ export const Home: React.FC = () => {
 
             <div
             className="w-60 h-60 bg-white/20 rounded-full backdrop-blur-lg hover:bg-white/30 transition flex flex-col items-center justify-center text-center cursor-pointer"
-            onClick={() => handleOpenModal('join')}
+            onClick={() => handleOpenModal('join', username, setModalType, setShowModal, setToastMessage)}
             >
             <ArrowRightCircleIcon className="h-16 w-16 text-white mb-4" />
             <span className="text-xl font-semibold">Join Room</span>
@@ -120,7 +54,7 @@ export const Home: React.FC = () => {
         </div>
 
         {showModal && (
-            <RoomNumberInputModal onClose={handleCloseModal} onSubmit={handleRoomSubmit} />
+            <RoomNumberInputModal onClose={()=>handleCloseModal(setShowModal, setModalType)} onSubmit={(roomID)=>handleRoomSubmit(roomID, username, modalType, setToastMessage, setShowModal, setModalType, navigate)} />
         )}
         </div>
         {toastMessage && (
