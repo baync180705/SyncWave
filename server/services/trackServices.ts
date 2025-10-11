@@ -12,9 +12,8 @@ export const addMusicToTrack = async (roomID: string, music: string): Promise<IT
 
 export const removeMusicFromTrack = async (roomID: string, music: string): Promise<ITrack | null> => {
     const track = await Track.findOne({ roomID: roomID });
-    let updatedTracks = track?.tracks;
     if (track) {
-        updatedTracks = track.tracks.filter((_, i) => i !== track.tracks.indexOf(music));
+        const updatedTracks = track.tracks.filter((_, i) => i !== track.tracks.indexOf(music));
         track.tracks = updatedTracks;
         await track.save();
     }

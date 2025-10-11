@@ -19,11 +19,12 @@ export const addUserToRoom = async (roomID: string, user: string): Promise<IRoom
 }
 
 export const removeUserFromRoom = async (roomID: string, user: string): Promise<IRoom | null> => {
-    const room: IRoom|null = await Room.findOneAndUpdate(
-        {roomID: roomID},
-        {$pull: {users: user}},
-        {new: true},
-    );
+    const room: IRoom | null = await Room.findOne({ roomID: roomID });
+    if (room) {
+        const updatedUsers = room.users.filter((_, i) => i !== room.users.indexOf(user));
+        room.users = updatedUsers;
+        await room.save();
+    }
 
     if (room){
         if(room.users.length===0){
